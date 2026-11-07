@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUBRICS. | Certification</title>
+    <!-- qrcode.js loaded via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        /*
+         * SWISS STYLE + RUBRICS BRANDING
+         * Pure Red (#FF0000) background, bold white text, black accents.
+         * Strict typography, generous white space, flush-left alignment.
+         */
+        :root {
+            --color-bg: #FF0000; /* Pure Red */
+            --color-text: #FFFFFF; /* White */
+            --color-accent: #000000; /* Black */
+            --color-input-bg: #FFFFFF;
+            --color-input-text: #000000;
+            --spacing-unit: 2rem;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.4;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--spacing-unit);
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding-top: var(--spacing-unit);
+        }
+
+        header {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border-bottom: 4px solid var(--color-text);
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 0;
+            text-transform: uppercase;
+        }
+
+        .black-dot {
+            color: var(--color-accent);
+        }
+
+        h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        p.subtitle {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.2rem;
+            font-family: inherit;
+            font-weight: 700;
+            border: none;
+            background-color: var(--color-input-bg);
+            color: var(--color-input-text);
+            border-radius: 0;
+            appearance: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 4px solid var(--color-accent);
+            outline-offset: 0;
+        }
+
+        /* Star Rating */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 4rem;
+            color: #990000; /* Dark red for inactive */
+            cursor: pointer;
+            transition: color 0.2s;
+            margin: 0;
+        }
+
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: var(--color-text); /* White for active */
+        }
+
+        /* Checkbox */
+        .checkbox-group {
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        input[type="checkbox"] {
+            width: 2rem;
+            height: 2rem;
+            accent-color: var(--color-accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checkbox-group label {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: none;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn-group {
+            margin-top: 3rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 900;
+            font-family: inherit;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            background-color: var(--color-accent);
+            color: var(--color-text);
+            border-radius: 0;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        button.secondary {
+            background-color: transparent;
+            border: 4px solid var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        button:hover {
+            background-color: #222;
+        }
+
+        button.secondary:hover {
+            background-color: var(--color-accent);
+            color: var(--color-text);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Error States */
+        .error-message {
+            color: var(--color-accent);
+            background: var(--color-text);
+            padding: 0.5rem 1rem;
+            font-weight: 900;
+            margin-top: 0.5rem;
+            display: none;
+            text-transform: uppercase;
+        }
+
+        /* Page Management */
+        .page {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            text-align: left;
+            padding: 4rem 0;
+        }
+
+        .loader-text {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .loader-subtext {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FF9999;
+            height: 2rem;
+        }
+
+        /* Victory Animation */
+        .victory-container {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .victory-container.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .victory-badge {
+            display: inline-block;
+            background: var(--color-text);
+            color: var(--color-bg);
+            padding: 0.5rem 1rem;
+            font-weight: 900;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        /* Canvas */
+        .canvas-container {
+            width: 100%;
+            margin-bottom: 2rem;
+            border: 8px solid var(--color-accent);
+            background: #fff;
+            box-shadow: 20px 20px 0px var(--color-accent);
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #qr-container { display: none; }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            button { width: 100%; }
+            .canvas-container { box-shadow: 10px 10px 0px var(--color-accent); border-width: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>RUBRICS<span class="black-dot">.</span></h1>
+        <p class="subtitle">Certification Registry</p>
+    </header>
+
+    <!-- PAGE 1: DETAILS -->
+    <div id="page-1" class="page active">
+        <h2>Step 1: Details</h2>
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" placeholder="ENTER YOUR FULL NAME" autocomplete="off">
+            <div class="error-message" id="err-name">Name is required</div>
+        </div>
+
+        <div class="form-group">
+            <label for="emailId">Email Address</label>
+            <input type="email" id="emailId" placeholder="ENTER YOUR EMAIL" autocomplete="off">
+            <div class="error-message" id="err-email">Valid email is required</div>
+        </div>
+
+        <div class="form-group">
+            <label for="college">College / Institution</label>
+            <input type="text" id="college" placeholder="ENTER YOUR COLLEGE NAME" autocomplete="off">
+            <div class="error-message" id="err-college">College is required</div>
+        </div>
+
+        <div class="form-group">
+            <label for="yearOfStudy">Year of Study</label>
+            <select id="yearOfStudy">
+                <option value="" disabled selected>SELECT YEAR</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Graduate/Other">Graduate / Other</option>
+            </select>
+            <div class="error-message" id="err-year">Year is required</div>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="goToPage(2)">Next Step ➔</button>
+        </div>
+    </div>
+
+    <!-- PAGE 2: FEEDBACK -->
+    <div id="page-2" class="page">
+        <h2>Step 2: Experience</h2>
+
+        <div class="form-group">
+            <label>How was your experience?</label>
+            <div class="star-rating">
+                <input type="radio" id="star5" name="rating" value="5"><label for="star5" title="5 stars">★</label>
+                <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label>
+                <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars">★</label>
+                <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars">★</label>
+                <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star">★</label>
+            </div>
+            <div class="error-message" id="err-rating">Please select a rating</div>
+        </div>
+
+        <div class="form-group">
+            <label for="comments">Any comments to give?</label>
+            <textarea id="comments" placeholder="TELL US ABOUT YOUR EXPERIENCE..."></textarea>
+        </div>
+
+        <div class="btn-group">
+            <button class="secondary" onclick="goToPage(1)">Back</button>
+            <button onclick="goToPage(3)">Next Step ➔</button>
+        </div>
+    </div>
+
+    <!-- PAGE 3: CONSENT & SUBMIT -->
+    <div id="page-3" class="page">
+        <h2>Step 3: Official Records</h2>
+        <p style="font-size: 1.2rem; font-weight: 700; margin-bottom: 2rem;">
+            Your certificate will be generated live and cryptographically linked to the Rubrics Registry.
+        </p>
+
+        <div class="form-group checkbox-group">
+            <input type="checkbox" id="consent">
+            <label for="consent">I consent to have my name listed in the official public records of Rubrics Technologies for verification purposes.</label>
+        </div>
+        <div class="error-message" id="err-consent">You must provide consent to generate the certificate</div>
+
+        <div class="btn-group">
+            <button class="secondary" onclick="goToPage(2)">Back</button>
+            <button onclick="submitData()">Generate Certificate</button>
+        </div>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="page">
+        <div class="loader-text">GENERATING...</div>
+        <div class="loader-subtext" id="dynamic-loader-text">Connecting to registry...</div>
+    </div>
+
+    <!-- PAGE 4: VICTORY & CANVAS -->
+    <div id="page-4" class="page">
+        <div class="victory-container" id="victory-box">
+            <div class="victory-badge">SUCCESSFUL</div>
+            <h2>CERTIFICATE READY</h2>
+
+            <div class="canvas-container">
+                <canvas id="cert-canvas"></canvas>
+            </div>
+
+            <div class="btn-group">
+                <button onclick="downloadCert()">Download HD Document</button>
+                <button class="secondary" onclick="location.reload()">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="qr-container"></div>
+</div>
+
+<script>
+    /* =====================================================================
+     * CONFIGURATION
+     * ===================================================================== */
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkqc7TW6GiRpNgCJwhPqgdIrDxyjcUWL22SVG_mpL-p1-jYvBdsixr8lvYY9-8djIM/exec";
+    const CERT_TEMPLATE_URL = "certificate.png";
+
+    const NAME_POS = { x: 180, y: 365, maxWidth: 650, fontSize: 56, align: "left", font: "Helvetica" };
+    const CODE_POS = { x: 820, y: 100, fontSize: 0 };
+    const DATE_POS = { x: 190, y: 550, fontSize: 0 };
+    const QR_POS = { x: 795, y: 505, size: 155 };
+
+    // Form Data Object
+    let formData = {};
+
+    // Navigation & Validation Logic
+    function hideAllErrors() {
+        document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+    }
+
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    function goToPage(pageNum) {
+        hideAllErrors();
+        let isValid = true;
+
+        if (pageNum === 2) {
+            // Validate Page 1
+            const name = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('emailId').value.trim();
+            const college = document.getElementById('college').value.trim();
+            const year = document.getElementById('yearOfStudy').value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!name) { document.getElementById('err-name').style.display = 'block'; isValid = false; }
+            if (!email || !emailRegex.test(email)) { document.getElementById('err-email').style.display = 'block'; isValid = false; }
+            if (!college) { document.getElementById('err-college').style.display = 'block'; isValid = false; }
+            if (!year) { document.getElementById('err-year').style.display = 'block'; isValid = false; }
+
+            if(isValid) switchPage('page-2');
+        }
+        else if (pageNum === 3) {
+            // Validate Page 2
+            const rating = document.querySelector('input[name="rating"]:checked');
+            if (!rating) { document.getElementById('err-rating').style.display = 'block'; isValid = false; }
+
+            if(isValid) switchPage('page-3');
+        }
+        else {
+            // Going back
+            switchPage(`page-${pageNum}`);
+        }
+    }
+
+    // Submission & Loading Animation
+    async function submitData() {
+        hideAllErrors();
+        const consent = document.getElementById('consent').checked;
+        if (!consent) {
+            document.getElementById('err-consent').style.display = 'block';
+            return;
+        }
+
+        // Gather all data
+        formData = {
+            fullName: document.getElementById('fullName').value.trim(),
+            emailId: document.getElementById('emailId').value.trim(),
+            college: document.getElementById('college').value.trim(),
+            yearOfStudy: document.getElementById('yearOfStudy').value,
+            rating: document.querySelector('input[name="rating"]:checked').value,
+            comments: document.getElementById('comments').value.trim()
+        };
+
+        // Show Loading Screen
+        switchPage('loading-screen');
+        startLoadingTextSequence(formData.fullName);
+
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                redirect: "follow",
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) throw new Error("Network response error");
+            const result = await response.json();
+
+            if (result.code) {
+                await generateCertificate(formData.fullName, result.code);
+                showVictoryScreen();
+            } else {
+                throw new Error("Invalid format from server");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Registration failed. Please check your connection and try again.");
+            switchPage('page-3'); // Go back to submit page
+        }
+    }
+
+    function startLoadingTextSequence(name) {
+        const texts = [
+            "Validating credentials...",
+            `Authenticating ${name.toUpperCase()}...`,
+            "Connecting to Rubrics Database...",
+            "Minting cryptographic QR code...",
+            "Engraving final document..."
+        ];
+        let i = 0;
+        const textEl = document.getElementById('dynamic-loader-text');
+
+        // Change text every 1.5 seconds while waiting for fetch
+        const interval = setInterval(() => {
+            i = (i + 1) % texts.length;
+            textEl.textContent = texts[i];
+        }, 1500);
+
+        // Save interval ID to window so we can clear it later if needed, though fetch will overlay it
+        window.loaderInterval = interval;
+    }
+
+    function showVictoryScreen() {
+        clearInterval(window.loaderInterval);
+        switchPage('page-4');
+        // Trigger CSS victory animation slightly after rendering
+        setTimeout(() => {
+            document.getElementById('victory-box').classList.add('show');
+        }, 100);
+    }
+
+    // Certificate Rendering Logic
+    const certCanvas = document.getElementById('cert-canvas');
+    const ctx = certCanvas.getContext('2d');
+    const qrContainer = document.getElementById('qr-container');
+
+    function generateQRCanvas(text, size) {
+        return new Promise((resolve) => {
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: text,
+                width: size,
+                height: size,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            setTimeout(() => {
+                resolve(qrContainer.querySelector('canvas'));
+            }, 100);
+        });
+    }
+
+    function generateCertificate(name, code) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.src = CERT_TEMPLATE_URL;
+
+            img.onload = async () => {
+                certCanvas.width = img.width;
+                certCanvas.height = img.height;
+
+                ctx.drawImage(img, 0, 0);
+
+                const today = new Date().toLocaleDateString('en-IN');
+                ctx.font = `${DATE_POS.fontSize}px Helvetica, sans-serif`;
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'left';
+                ctx.fillText(today, DATE_POS.x, DATE_POS.y);
+
+                ctx.font = `${CODE_POS.fontSize}px Helvetica, sans-serif`;
+                ctx.fillText(code, CODE_POS.x, CODE_POS.y);
+
+                let currentFontSize = NAME_POS.fontSize;
+                ctx.font = `bold ${currentFontSize}px ${NAME_POS.font}, sans-serif`;
+                ctx.textAlign = NAME_POS.align;
+
+                if (NAME_POS.maxWidth > 0) {
+                    while (ctx.measureText(name).width > NAME_POS.maxWidth && currentFontSize > 12) {
+                        currentFontSize--;
+                        ctx.font = `bold ${currentFontSize}px ${NAME_POS.font}, sans-serif`;
+                    }
+                }
+                ctx.fillText(name, NAME_POS.x, NAME_POS.y);
+
+                const verificationUrl = `https://hareshbub.github.io/rc/?id=${code}`;
+                const qrCanvasElement = await generateQRCanvas(verificationUrl, QR_POS.size);
+
+                if (qrCanvasElement) {
+                    ctx.drawImage(qrCanvasElement, QR_POS.x, QR_POS.y, QR_POS.size, QR_POS.size);
+                }
+                resolve();
+            };
+            img.onerror = () => reject(new Error("Failed to load template."));
+        });
+    }
+
+    function downloadCert() {
+        const canvasData = certCanvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        const safeName = formData.fullName.replace(/\s+/g, '_');
+        link.download = `${safeName}_RUBRICS_Certificate.png`;
+        link.href = canvasData;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+</body>
+</html>
