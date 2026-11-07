@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUBRICS. | Certification Registry</title>
+    
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* RUBRICS Brand Colors */
+        :root {
+            --rb-red: #D32F2F; /* Matching the certificate red */
+            --rb-black: #000000;
+            --rb-dark: #1A1A1A;
+            --bg-color: #F8F9FA;
+            --text-main: #2C3E50;
+            --text-muted: #7F8C8D;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0; padding: 0;
+            background: var(--bg-color); color: var(--text-main);
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+        }
+
+        .brand-strip {
+            width: 100%; height: 8px;
+            background: var(--rb-red);
+        }
+
+        header {
+            width: 100%; padding: 30px 0 20px 0; text-align: center;
+            background: #ffffff; box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; font-weight: 900; letter-spacing: 2px; color: var(--rb-black); text-transform: uppercase; }
+        .red-dot { color: var(--rb-red); }
+
+        .main-content {
+            flex-grow: 1; display: flex; justify-content: center; align-items: center;
+            width: 100%; padding: 20px; box-sizing: border-box;
+        }
+
+        .verification-card {
+            background: #ffffff; border-radius: 12px; padding: 40px;
+            width: 100%; max-width: 500px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); position: relative; overflow: hidden;
+            border-top: 4px solid var(--rb-black);
+        }
+
+        .verification-card h2 { margin-top: 0; font-size: 1.3rem; margin-bottom: 25px; font-weight: 600; color: var(--rb-black); }
+
+        input[type="text"] {
+            width: 100%; padding: 15px; margin-bottom: 20px; 
+            border: 2px solid #e0e0e0; background: #fdfdfd; color: var(--text-main); border-radius: 6px; font-size: 1.1rem;
+            font-family: inherit; box-sizing: border-box; outline: none; text-align: center; letter-spacing: 2px; transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus { border-color: var(--rb-red); box-shadow: 0 0 8px rgba(211, 47, 47, 0.2); }
+
+        button {
+            width: 100%; padding: 15px; border: none; border-radius: 6px; background: var(--rb-black);
+            color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        button:hover { background: var(--rb-red); }
+
+        .download-btn { background: var(--rb-red); margin-top: 25px; box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .download-btn:hover { background: #B71C1C; }
+        
+        .god-btn { background: var(--rb-dark); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
+        .god-btn:hover { background: #000000; }
+
+        #result-box { padding: 20px; border-radius: 6px; display: none; font-size: 1.1rem; line-height: 1.6; animation: fadeIn 0.4s ease; color: var(--text-main); }
+        .success { background: rgba(211, 47, 47, 0.05); border: 2px solid var(--rb-red); }
+        .error { background: rgba(26, 26, 26, 0.05); border: 2px solid var(--rb-dark); }
+        .god-mode { background: rgba(0, 0, 0, 0.8); border: 2px solid var(--rb-red); color: white !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        footer { width: 100%; padding: 20px 0; text-align: center; background: #ffffff; margin-top: auto; border-top: 1px solid #eeeeee; }
+        .logo { max-width: 180px; height: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="brand-strip"></div>
+
+    <header>
+        <h1>RUBRICS<span class="red-dot">.</span></h1>
+        <div style="font-size: 0.9rem; letter-spacing: 3px; color: var(--text-muted); margin-top: 5px; font-weight: 600;">CERTIFICATION REGISTRY</div>
+    </header>
+
+    <div class="main-content">
+        <div class="verification-card">
+            
+            <div id="input-section">
+                <h2>Enter 4-Digit Certificate ID</h2>
+                <input type="text" id="certId" placeholder="e.g. 1042" autocomplete="off" maxlength="10">
+                <button onclick="triggerVerification()">Verify Credential</button>
+            </div>
+            
+            <div id="result-box"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; letter-spacing: 1px;">POWERED BY RUBRICS TECHNOLOGIES</div>
+    </footer>
+
+    <script>
+        const CSV_URL = 'data.csv';
+        let globalData = [];
+        let globalHeaders = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const rows = text.split('\n').map(row => row.replace(/\r/g, '').split(','));
+                globalHeaders = rows[0].map(h => h.trim());
+                globalData = rows.slice(1).filter(row => row.length > 1); 
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetID = urlParams.get('id');
+                if (targetID) {
+                    document.getElementById('input-section').style.display = 'none';
+                    document.getElementById('certId').value = targetID;
+                    triggerVerification();
+                }
+            } catch (error) {
+                console.error("Database connection error:", error);
+            }
+        }
+
+        function triggerVerification() {
+            const inputId = document.getElementById('certId').value.trim();
+            const resultBox = document.getElementById('result-box');
+            resultBox.style.display = 'block';
+            resultBox.className = ''; 
+
+            if (!inputId) {
+                resultBox.innerHTML = "Please enter a valid ID.";
+                resultBox.classList.add('error');
+                return;
+            }
+
+            if (inputId === "ADMIN") {
+                resultBox.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 5px; color: var(--rb-red);">⚙️</div>
+                    <strong style="font-size: 1.5rem; color: var(--rb-red);">SYSTEM OVERRIDE</strong><br><br>
+                    <span style="color: #ddd;">Complete database roster is ready for extraction.</span>
+                    <button class="download-btn god-btn" onclick="generateGodModePDF()">⬇ Download Master Database</button>
+                `;
+                resultBox.classList.add('god-mode');
+                return;
+            }
+
+            // Look for the 4-digit code in the first column
+            const candidateRow = globalData.find(row => row[0] && row[0].trim() === inputId);
+
+            if (candidateRow) {
+                const name = candidateRow[1];
+                const date = candidateRow[2];
+                const course = candidateRow[3];
+
+                resultBox.innerHTML = `
+                    <div style="font-size: 4.5rem; margin-bottom: 5px; color: var(--rb-red);">✓</div>
+                    <strong style="font-size: 1.5rem; letter-spacing: 1px; color: var(--rb-black);">VERIFIED</strong><br><br>
+                    This confirms <strong>${name}</strong> actively participated and contributed to the seminar on <strong>${course}</strong> on ${date}.
+                    <br>
+                    <button class="download-btn" onclick="generateNormalPDF('${inputId}')">⬇ Download Verification Record</button>
+                `;
+                resultBox.classList.add('success');
+            } else {
+                resultBox.innerHTML = `
+                    <div style="font-size: 4.5rem; margin-bottom: 5px; color: var(--rb-black);">✗</div>
+                    <strong style="font-size: 1.5rem; color: var(--rb-black); letter-spacing: 1px;">RECORD NOT FOUND</strong><br><br>
+                    Certificate ID <strong>${inputId}</strong> does not exist in the Rubrics registry.
+                `;
+                resultBox.classList.add('error');
+            }
+        }
+
+        function addFooterToPDF(doc) {
+            const pageCount = doc.internal.getNumberOfPages();
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
+
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                
+                // Red and Black footer strip
+                doc.setLineWidth(2);
+                doc.setDrawColor(211, 47, 47); // Red
+                doc.line(20, pageHeight - 25, pageWidth / 2, pageHeight - 25);
+                doc.setDrawColor(0, 0, 0); // Black
+                doc.line(pageWidth / 2, pageHeight - 25, pageWidth - 20, pageHeight - 25);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.text("Official Record - RUBRICS TECHNOLOGIES", pageWidth / 2, pageHeight - 15, { align: 'center' });
+            }
+        }
+
+        function generateNormalPDF(inputId) {
+            const candidateRow = globalData.find(row => row[0] === inputId);
+            if (!candidateRow) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const id = candidateRow[0];
+            const name = candidateRow[1];
+            const date = candidateRow[2];
+            const course = candidateRow[3];
+
+            doc.setFontSize(24);
+            doc.setTextColor(211, 47, 47); // Rubrics Red
+            doc.text("VERIFICATION RECORD", 105, 30, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text("RUBRICS.", 105, 40, { align: 'center' });
+            
+            doc.setFontSize(11);
+            doc.setTextColor(80);
+            doc.text(`Credential ID: ${id}`, 105, 48, { align: 'center' });
+
+            doc.autoTable({
+                startY: 60,
+                margin: { bottom: 30 }, 
+                head: [['Verification Field', 'Logged Detail']],
+                body: [
+                    ['Participant Name', name],
+                    ['Event Type', 'Seminar conducted by ELC'],
+                    ['Topic', course],
+                    ['Event Date', date],
+                    ['Verification Status', 'Authentic / Database Verified']
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [0, 0, 0], halign: 'center' }, // Black header
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60, textColor: [211, 47, 47] } } // Red left column
+            });
+
+            addFooterToPDF(doc);
+            doc.save(`${name.replace(/\s+/g, '_')}_RUBRICS_Record.pdf`);
+        }
+
+        function generateGodModePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(22);
+            doc.setTextColor(211, 47, 47); 
+            doc.text("RUBRICS. MASTER ROSTER", 105, 25, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(80);
+            doc.text(`Authorized Database Export`, 105, 35, { align: 'center' });
+
+            doc.autoTable({
+                startY: 50,
+                margin: { bottom: 30 },
+                head: [globalHeaders],
+                body: globalData,
+                theme: 'grid',
+                headStyles: { fillColor: [211, 47, 47] } 
+            });
+
+            addFooterToPDF(doc);
+            doc.save(`RUBRICS_Master_Database.pdf`);
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
