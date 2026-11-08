@@ -259,13 +259,19 @@
         /* Victory Animation */
         .victory-container {
             opacity: 0;
-            transform: scale(0.9);
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0.8) translateY(30px);
+        }
+
+        /* Success Bounce Animation */
+        @keyframes popInBounce {
+            0% { opacity: 0; transform: scale(0.8) translateY(30px); }
+            60% { opacity: 1; transform: scale(1.02) translateY(-10px); }
+            80% { opacity: 1; transform: scale(0.98) translateY(5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .victory-container.show {
-            opacity: 1;
-            transform: scale(1);
+            animation: popInBounce 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
         .victory-badge {
@@ -277,6 +283,7 @@
             font-size: 1.5rem;
             text-transform: uppercase;
             margin-bottom: 1rem;
+            box-shadow: 4px 4px 0px var(--color-accent);
         }
 
         /* Canvas */
@@ -315,25 +322,25 @@
     <div id="page-1" class="page active">
         <h2>Step 1: Details</h2>
         <div class="form-group">
-            <label for="fullName">Full Name</label>
+            <label for="fullName">Full Name *</label>
             <input type="text" id="fullName" placeholder="ENTER YOUR FULL NAME" autocomplete="off">
             <div class="error-message" id="err-name">Name is required</div>
         </div>
 
         <div class="form-group">
-            <label for="emailId">Email Address</label>
+            <label for="emailId">Email Address *</label>
             <input type="email" id="emailId" placeholder="ENTER YOUR EMAIL" autocomplete="off">
             <div class="error-message" id="err-email">Valid email is required</div>
         </div>
 
         <div class="form-group">
-            <label for="college">College / Institution</label>
+            <label for="college">College / Institution *</label>
             <input type="text" id="college" placeholder="ENTER YOUR COLLEGE NAME" autocomplete="off">
             <div class="error-message" id="err-college">College is required</div>
         </div>
 
         <div class="form-group">
-            <label for="yearOfStudy">Year of Study</label>
+            <label for="yearOfStudy">Year of Study *</label>
             <select id="yearOfStudy">
                 <option value="" disabled selected>SELECT YEAR</option>
                 <option value="1st Year">1st Year</option>
@@ -355,7 +362,7 @@
         <h2>Step 2: Experience</h2>
 
         <div class="form-group">
-            <label>How was your experience?</label>
+            <label>How was your experience? *</label>
             <div class="star-rating">
                 <input type="radio" id="star5" name="rating" value="5"><label for="star5" title="5 stars">★</label>
                 <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label>
@@ -367,8 +374,9 @@
         </div>
 
         <div class="form-group">
-            <label for="comments">Any comments to give?</label>
+            <label for="comments">Any comments to give? *</label>
             <textarea id="comments" placeholder="TELL US ABOUT YOUR EXPERIENCE..."></textarea>
+            <div class="error-message" id="err-comments">Comments are required</div>
         </div>
 
         <div class="btn-group">
@@ -386,7 +394,7 @@
 
         <div class="form-group checkbox-group">
             <input type="checkbox" id="consent">
-            <label for="consent">I consent to have my name listed in the official public records of Rubrics Technologies for verification purposes.</label>
+            <label for="consent">I accept to store my data for the purpose of verification. *</label>
         </div>
         <div class="error-message" id="err-consent">You must provide consent to generate the certificate</div>
 
@@ -470,7 +478,10 @@
         else if (pageNum === 3) {
             // Validate Page 2
             const rating = document.querySelector('input[name="rating"]:checked');
+            const comments = document.getElementById('comments').value.trim();
+            
             if (!rating) { document.getElementById('err-rating').style.display = 'block'; isValid = false; }
+            if (!comments) { document.getElementById('err-comments').style.display = 'block'; isValid = false; }
 
             if(isValid) switchPage('page-3');
         }
@@ -544,17 +555,18 @@
             textEl.textContent = texts[i];
         }, 1500);
 
-        // Save interval ID to window so we can clear it later if needed, though fetch will overlay it
+        // Save interval ID to window so we can clear it later if needed
         window.loaderInterval = interval;
     }
 
     function showVictoryScreen() {
         clearInterval(window.loaderInterval);
         switchPage('page-4');
+        
         // Trigger CSS victory animation slightly after rendering
         setTimeout(() => {
             document.getElementById('victory-box').classList.add('show');
-        }, 100);
+        }, 50);
     }
 
     // Certificate Rendering Logic
